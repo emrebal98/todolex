@@ -1,0 +1,8 @@
+tasks:
+  install:
+    command: pnpm install
+    options:
+      outputStyle: buffer-only-failure
+
+  lint:
+    command: pnpm run lint

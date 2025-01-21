@@ -19,3 +19,8 @@ projects:
 vcs:
   manager: 'git'
   defaultBranch: master
+  hooks:
+    commit-msg:
+      - 'moon run commit:lint -- --edit $1'
+  syncHooks: true
+  hookFormat: bash
