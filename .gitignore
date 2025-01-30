@@ -2,3 +2,19 @@
 .moon/cache
 .moon/docker
 .moon/hooks
+
+# dependencies
+node_modules
+
+# IDE
+.idea
+.awcache
+.vscode
+.vs
+
+# build
+build
+dist
+
+# secrets
+.env

@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+tasks:
+  migrate:
+    deps: [migrate_auth]
+
+  # This task is just for inheritance, it does not do anything.
+  migrate_core:
+    options:
+      cache: false
+    script: |
+      url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      username=${DB_USERNAME}
+      password=${DB_PASSWORD}
+
+      cd ${DIR} && liquibase --url=$url --username=$username --password=$password update
+
+  migrate_auth:
+    extends: migrate_core
+    options:
+      envFile: './auth/.env'
+    env:
+      DIR: 'auth'
