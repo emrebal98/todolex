@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/toolchain.json
+$schema: 'https://moonrepo.dev/schemas/toolchain.json'
+
+node:
+  packageManager: 'pnpm'
+  pnpm:
+    version: 8.9.0
+  version: 20.12.2

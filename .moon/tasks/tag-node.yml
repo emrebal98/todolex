@@ -1,0 +1,5 @@
+tasks:
+  install:
+    command: pnpm install
+    options:
+      outputStyle: buffer-only-failure

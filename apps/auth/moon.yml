@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+tags:
+  - node
+
+tasks:
+  db_pull:
+    command: pnpm run db:pull
+    options:
+      outputStyle: buffer-only-failure
+
+  prisma_ignore:
+    description: 'Ignore tables from Prisma schema with @@ignore directive'
+    env:
+      PRISMA_SCHEMA: 'src/prisma/schema.prisma'
+      TABLE_NAMES: 'database_changelog|database_changelog_lock'
+    script: |
+      echo "$TABLE_NAMES" | tr '|' '\n' | while read -r TABLE; do
+          # Check if @@ignore is already present in the table block
+          if ! sed -n "/model $TABLE {/,/}/ { /@@ignore/p }" "$PRISMA_SCHEMA" | grep -q "@@ignore"; then
+              # Add @@ignore
+              sed -i "/model $TABLE {/,/}/ {
+                /}/i\\
+                \\ \\ @@ignore
+              }" "$PRISMA_SCHEMA"
+          fi
+      done
+
+  prisma_format:
+    command: pnpm run format:prisma
+    options:
+      outputStyle: buffer-only-failure
+
+  db_generate:
+    command: pnpm run db:generate
+    options:
+      outputStyle: buffer-only-failure
+
+  migrate_sync:
+    options:
+      outputStyle: buffer-only-failure
+      runDepsInParallel: false
+    deps: [db_pull, prisma_ignore, prisma_format, db_generate]
+
+  dev:
+    command: pnpm run start:dev
+    deps: [migrate_sync]
+
+  build:
+    command: pnpm run build
+    deps: [migrate_sync]

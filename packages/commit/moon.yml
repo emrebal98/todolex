@@ -1,11 +1,11 @@
 # yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
 $schema: 'https://moonrepo.dev/schemas/project.json'
 
-tasks:
-  install:
-    command: pnpm install
-    options:
-      outputStyle: buffer-only-failure
+tags:
+  - node
 
+tasks:
   lint:
     command: pnpm run lint
+    options:
+      cache: false
