@@ -1,4 +1,10 @@
 * text eol=lf
+
+# Java
+/gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+
 # Graphics
 *.png binary
 *.jpg binary

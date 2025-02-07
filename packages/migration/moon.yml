@@ -3,7 +3,9 @@ $schema: 'https://moonrepo.dev/schemas/project.json'
 
 tasks:
   migrate:
-    deps: [migrate_auth]
+    deps: [migrate_auth, migrate_todo]
+    options:
+      outputStyle: buffer-only-failure
 
   # This task is just for inheritance, it does not do anything.
   migrate_core:
@@ -22,3 +24,10 @@ tasks:
       envFile: './auth/.env'
     env:
       DIR: 'auth'
+
+  migrate_todo:
+    extends: migrate_core
+    options:
+      envFile: './todo/.env'
+    env:
+      DIR: 'todo'

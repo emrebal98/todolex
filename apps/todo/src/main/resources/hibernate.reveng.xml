@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering SYSTEM "http://hibernate.org/dtd/hibernate-reverse-engineering-3.0.dtd">
+
+<hibernate-reverse-engineering>
+
+    <table-filter match-name="database_changelog" exclude="true" />
+    <table-filter match-name="database_changelog_lock" exclude="true" />
+    <table name="todo_item" catalog="todo_db" schema="public">
+        <primary-key>
+            <generator class="identity" />
+        </primary-key>
+
+    </table>
+</hibernate-reverse-engineering>

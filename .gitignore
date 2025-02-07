@@ -11,6 +11,20 @@ node_modules
 .awcache
 .vscode
 .vs
+## IntelliJ
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+## NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
 
 # build
 build
@@ -18,3 +32,24 @@ dist
 
 # secrets
 .env
+
+# Java
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+# Ignore hibernate.properties file to prevent conflict with application.yml
+hibernate.properties
+
+# STS (Spring Tool Suite)
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/

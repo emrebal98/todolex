@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=https://json.schemastore.org/liquibase-3.2.json
+$schema: 'https://json.schemastore.org/liquibase-3.2.json'
+
+databaseChangeLog:
+  - changeSet:
+      id: '1'
+      author: admin
+      changes:
+        - createTable:
+            tableName: todo_item
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: TEXT
+                  constraints:
+                    nullable: true
+              - column:
+                  name: completed
+                  type: BOOLEAN
+
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+          rollback:
+            dropTable:
+              tableName: todo_item

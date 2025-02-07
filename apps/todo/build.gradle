@@ -1,0 +1,113 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'org.yaml:snakeyaml:2.0'
+  }
+}
+
+plugins {
+  id 'java'
+  id 'org.springframework.boot' version '3.4.2'
+  id 'io.spring.dependency-management' version '1.1.7'
+}
+
+
+group = 'com.todolex'
+version = '0.0.1-SNAPSHOT'
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
+}
+
+repositories {
+  mavenCentral()
+}
+
+configurations {
+  generateEntities
+}
+
+dependencies {
+  implementation 'org.springframework.boot:spring-boot-starter-web:3.4.2'
+  implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.4.2'
+  implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+
+  runtimeOnly 'org.postgresql:postgresql:42.7.5'
+
+  developmentOnly "org.springframework.boot:spring-boot-devtools"
+  generateEntities files('lib/hibernate-tools.6.6.5.jar')
+  generateEntities 'org.postgresql:postgresql:42.7.5'
+}
+
+project.ext {
+  hibernateDestDir = file("$projectDir/src/main/java")
+}
+
+import org.yaml.snakeyaml.Yaml
+import java.util.Properties
+import java.nio.file.Files
+import java.nio.file.Paths
+
+task generateEntities {
+  outputs.dir hibernateDestDir
+  doLast {
+    hibernateDestDir.exists() || hibernateDestDir.mkdirs()
+	  // Parse YAML configuration
+    def yaml = new Yaml()
+    def configText = new File("$projectDir/src/main/resources/application.yml").text
+    // Replace placeholders with environment variables
+    configText = configText.replaceAll(/\$\{(\w+)\}/) { match, envVarName ->
+        def envValue = System.getenv(envVarName)
+        if (envValue == null) {
+            throw new Exception("Environment variable $envVarName is not set")
+        }
+        envValue
+    }
+    def config = yaml.load(configText)
+    // Get data source information from YAML
+    def datasource = config?.spring?.datasource
+    def properties = new Properties()
+	  // Set Hibernate properties
+    properties.setProperty("hibernate.connection.url", datasource?.url ?: "")
+    properties.setProperty("hibernate.connection.username", datasource?.username ?: "")
+    properties.setProperty("hibernate.connection.password", datasource?.password?.toString() ?: "")
+    properties.setProperty("hibernate.dialect", config?.spring?.jpa?.properties?.hibernate?.dialect ?: "org.hibernate.dialect.PostgreSQLDialect")
+    properties.setProperty("hibernate.connection.driver_class", config?.spring?.datasource['driver-class-name'] ?: "org.postgresql.Driver")
+   	// Create temporary properties file
+    def propsFile = file("$projectDir/src/main/resources/hibernate.properties")
+    propsFile.text = properties.collect { k, v -> "$k=$v" }.join("\n")
+   	// Perform reverse engineering using Hibernate Tool
+    ant {
+      taskdef(
+        name: 'hibernatetool',
+        classname: 'org.hibernate.tool.ant.HibernateToolTask',
+        classpath: configurations.generateEntities.asPath
+      )
+      hibernatetool(destdir: hibernateDestDir) {
+        jdbcconfiguration(
+          propertyFile: propsFile.absolutePath,
+          revengFile: "$projectDir/src/main/resources/hibernate.reveng.xml",
+          packagename: "com.todolex.todo.entity"
+        )
+        hbm2java(jdk5: true, ejb3: true)
+      }
+    }
+	  // Delete the temporary properties file after use
+    Files.deleteIfExists(Paths.get(propsFile.absolutePath))
+  }
+}
+
+bootRun {
+  doFirst {
+    // Check if hibernate.properties exists and delete it
+    def propsFile = file("$projectDir/src/main/resources/hibernate.properties")
+    if (propsFile.exists()) {
+      logger.lifecycle("Deleting existing hibernate.properties file...")
+      propsFile.delete()
+    }
+  }
+}
