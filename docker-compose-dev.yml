@@ -1,0 +1,78 @@
+networks:
+  todolex-development-network:
+    driver: bridge
+
+services:
+  proxy:
+    ports:
+      - '8080:8080'
+    command:
+      - '--api.insecure=true'
+      - '--api.dashboard=true'
+      - '--log.level=DEBUG'
+      - '--providers.docker.endpoint=unix:///var/run/docker.sock'
+      - '--providers.docker.exposedByDefault=false'
+      - '--entrypoints.web.address=:80'
+    networks:
+      - todolex-development-network
+
+  auth:
+    environment:
+      - DATABASE_URL="postgres://postgres:12345678@todolex-postgres:5432/auth_db"
+    networks:
+      - todolex-development-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  todo:
+    environment:
+      - DB_HOST=todolex-postgres
+      - DB_PORT=5432
+      - DB_NAME=todo_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=12345678
+    networks:
+      - todolex-development-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-doc:
+    environment:
+      - OPEN_API_JSON_URLS=http://auth:3000/auth/api-json,http://todo:3001/todo/api-json
+
+  postgres:
+    image: postgres:14
+    container_name: todolex-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345678
+    volumes:
+      - ./.dev/db-data:/var/lib/postgresql/data
+      - ./.dev/db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    networks:
+      - todolex-development-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: todolex-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - '5050:80'
+    volumes:
+      - ./.dev/pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - todolex-development-network

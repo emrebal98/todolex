@@ -9,6 +9,6 @@
         <primary-key>
             <generator class="identity" />
         </primary-key>
-
+        <column name="user_id" type="uuid" />
     </table>
 </hibernate-reverse-engineering>

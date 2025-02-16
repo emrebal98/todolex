@@ -1,0 +1,88 @@
+networks:
+  todolex-network:
+    driver: bridge
+
+services:
+  auth:
+    build:
+      context: ./apps/auth
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/auth/.env
+    networks:
+      - todolex-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/auth/health']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.auth.entrypoints=web'
+      - 'traefik.http.routers.auth.rule=Host(`localhost`) && PathPrefix(`/auth`)'
+      - 'traefik.http.services.auth.loadbalancer.server.port=3000'
+
+  todo:
+    build:
+      context: ./apps/todo
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/todo/.env
+    networks:
+      - todolex-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/todo/health']
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.todo.entrypoints=web'
+      - 'traefik.http.routers.todo.rule=Host(`localhost`) && PathPrefix(`/todo`)'
+      - 'traefik.http.routers.todo.priority=1'
+      - 'traefik.http.services.todo.loadbalancer.server.port=3001'
+      - 'traefik.http.routers.todo.middlewares=auth-middleware'
+      - 'traefik.http.routers.todo-api-docs.rule=Host(`localhost`) && (Path(`/todo/api-json`) || Path(`/todo/health`))'
+      - 'traefik.http.routers.todo-api-docs.priority=2'
+
+  api-doc:
+    build:
+      context: ./apps/api-doc
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/api-doc/.env
+    networks:
+      - todolex-network
+    depends_on:
+      auth:
+        condition: service_healthy
+      todo:
+        condition: service_healthy
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.api-doc.entrypoints=web'
+      - 'traefik.http.routers.api-doc.rule=Host(`localhost`) && PathPrefix(`/api-doc`)'
+      - 'traefik.http.services.api-doc.loadbalancer.server.port=5000'
+
+  proxy:
+    image: traefik:v2.10
+    ports:
+      - '80:80'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - todolex-network
+    command:
+      - '--providers.docker.endpoint=unix:///var/run/docker.sock'
+      - '--providers.docker.exposedByDefault=false'
+      - '--entrypoints.web.address=:80'
+
+  auth-middleware:
+    image: traefik:v2.10
+    networks:
+      - todolex-network
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.middlewares.auth-middleware.forwardauth.address=http://auth:3000/auth/validate'
+      - 'traefik.http.middlewares.auth-middleware.forwardauth.trustForwardHeader=true'
+      - 'traefik.http.middlewares.auth-middleware.forwardauth.authResponseHeaders=X-User-Id'

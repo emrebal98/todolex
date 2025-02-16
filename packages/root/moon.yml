@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+tasks:
+  compose_up:
+    command: cd ../.. && docker compose -f docker-compose.yml up -d
+    options:
+      cache: false
+  compose_down:
+    command: cd ../.. && docker compose -f docker-compose.yml down
+    options:
+      cache: false
+  compose_restart:
+    deps: [compose_down, compose_up]
+    options:
+      cache: false
+      runDepsInParallel: false
+
+  compose_dev_up:
+    command: cd ../.. && docker compose -f docker-compose.yml -f docker-compose-dev.yml up --build -d
+    options:
+      cache: false
+  compose_dev_down:
+    command: cd ../.. && docker compose -f docker-compose.yml -f docker-compose-dev.yml down
+    options:
+      cache: false
+  compose_dev_restart:
+    deps: [compose_dev_down, compose_dev_up]
+    options:
+      cache: false
+      runDepsInParallel: false

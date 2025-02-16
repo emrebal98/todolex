@@ -1,0 +1,17 @@
+# Ignore Gradle build directories
+.gradle/
+build/
+out/
+
+# Ignore IDE files
+*.iml
+.idea/
+.vscode/
+*.swp
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore environment files
+.env

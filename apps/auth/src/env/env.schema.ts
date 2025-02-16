@@ -3,9 +3,9 @@ import { z } from 'zod';
 const envSchema = z.object({
   PORT: z.coerce.number().optional().default(3000),
   DATABASE_URL: z.string(),
-  COOKIE_SECRET: z.string().optional().default('secret'),
-  COOKIE_NAME: z.string().optional().default('connect.sid'),
-  IS_SECURE_COOKIE: z.coerce.boolean().optional().default(false),
+  JWT_SECRET: z.string().optional().default('secret'),
+  JWT_ACCESS_TOKEN_EXPIRES_IN_SECONDS: z.coerce.number().optional().default(3600),
+  BASE_PATH: z.string().optional(),
 });
 
 export const validateEnv = (env: Record<string, unknown>) => {

@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as session from 'express-session';
 import * as passport from 'passport';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
@@ -11,22 +10,17 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const env = app.get(EnvService);
 
-  app.use(
-    session({
-      name: env.get('COOKIE_NAME'),
-      secret: env.get('COOKIE_SECRET'),
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: env.get('IS_SECURE_COOKIE') },
-    }),
-  );
+  const basePath = env.get('BASE_PATH');
+  if (basePath) {
+    app.setGlobalPrefix(basePath);
+  }
+
   app.use(passport.initialize());
-  app.use(passport.session());
   app.useGlobalPipes(new ValidationPipe());
 
-  const documentConfig = new DocumentBuilder().setTitle('Auth').setDescription('The auth API description').setVersion('').addCookieAuth(env.get('COOKIE_NAME')).build();
+  const documentConfig = new DocumentBuilder().setTitle('Auth').setVersion('').addBearerAuth({ type: 'http' }).addSecurityRequirements('bearer').build();
   const document = SwaggerModule.createDocument(app, documentConfig);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, { useGlobalPrefix: true, jsonDocumentUrl: `api-json`, ui: false });
 
   await app.listen(env.get('PORT'), '0.0.0.0');
   Logger.log(`Application is running on: ${await app.getUrl()}`);
