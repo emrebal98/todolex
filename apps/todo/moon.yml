@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+tasks:
+  file_watcher:
+    command: pnpm add -g nodemon
+    options:
+      outputStyle: buffer-only-failure
+
+  migrate_sync:
+    command: ./gradlew generateEntities
+    options:
+      outputStyle: buffer-only-failure
+      envFile: './.env'
+
+  dev:
+    options:
+      envFile: './.env'
+    command: nodemon --exec './gradlew bootRun' --watch src/main --ext java
+    deps: [file_watcher, migrate_sync]
+
+  build:
+    command: ./gradlew clean build
+    deps: [migrate_sync]
