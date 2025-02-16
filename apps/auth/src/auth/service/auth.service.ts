@@ -1,46 +1,38 @@
 import { PrismaService } from '@/prisma/prisma.service';
-import { HttpStatus, Injectable, Req, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Request } from 'express';
-import { UserDto } from '../dto';
+import { AccessToken, UserDto } from '../dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async validateUser(email: string, password: string): Promise<UserDto> {
-    if (!email || !password) throw new UnauthorizedException();
+    if (!email || !password) throw new BadRequestException('Email and password are required');
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new BadRequestException('Invalid credentials');
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) throw new UnauthorizedException();
+    if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
 
     return { id: user.id, email: user.email };
   }
 
-  async register(email: string, password: string): Promise<UserDto> {
-    if (!email || !password) throw new UnauthorizedException();
+  async register(email: string, password: string): Promise<AccessToken> {
+    if (!email || !password) throw new BadRequestException('Email and password are required');
     const userExists = await this.prisma.user.findUnique({ where: { email } });
-    if (userExists) throw new UnauthorizedException();
+    if (userExists) throw new BadRequestException('User already exists');
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await this.prisma.user.create({ data: { email, password: hashedPassword } });
 
-    return { id: user.id, email: user.email };
+    return this.login({ id: user.id, email: user.email });
   }
 
-  login() {
-    return {
-      message: 'Login successful',
-      statusCode: HttpStatus.OK,
-    };
-  }
-
-  logout(@Req() req: Request) {
-    req.session.destroy(() => {
-      return {
-        message: 'Logout successful',
-        statusCode: HttpStatus.OK,
-      };
-    });
+  async login(user: UserDto): Promise<AccessToken> {
+    const payload = { email: user.email, id: user.id };
+    return { access_token: await this.jwtService.signAsync(payload) };
   }
 }

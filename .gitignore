@@ -53,3 +53,7 @@ hibernate.properties
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
+
+# Development
+.dev/**
+!.dev/db-init.sql
