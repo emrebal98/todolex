@@ -19,6 +19,7 @@ services:
   auth:
     environment:
       - DATABASE_URL="postgres://postgres:12345678@todolex-postgres:5432/auth_db"
+      - BASE_PATH="/auth"
     networks:
       - todolex-development-network
     depends_on:
@@ -32,6 +33,7 @@ services:
       - DB_NAME=todo_db
       - DB_USERNAME=postgres
       - DB_PASSWORD=12345678
+      - BASE_PATH="/todo"
     networks:
       - todolex-development-network
     depends_on:
@@ -41,6 +43,7 @@ services:
   api-doc:
     environment:
       - OPEN_API_JSON_URLS=http://auth:3000/auth/api-json,http://todo:3001/todo/api-json
+      - BASE_PATH="/api-doc"
 
   postgres:
     image: postgres:14
