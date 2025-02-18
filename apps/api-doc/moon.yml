@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://moonrepo.dev/schemas/project.json
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+tags:
+  - node
+
+tasks:
+  dev:
+    command: pnpm run dev
+
+  start:
+    command: pnpm run start
